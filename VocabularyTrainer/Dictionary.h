@@ -3,23 +3,23 @@
 #include <string>
 #include <map>
 #include <fstream>
+#include <algorithm>
 
 using std::string;
+typedef void(*OutToFile)(const std::pair<string, string>&);
 
 class IDict {
 public:
 	virtual void Add(const string&, const string&) = 0;
 	virtual bool Find(const string&, string&) = 0;
 	virtual bool IsEmpty() const = 0;
-	virtual void PutNewWord(const string&, const string&) = 0;
-	virtual void SaveToFile() = 0;
+	virtual void SaveToFile(const string&) const = 0;
 };
 
 class Dict : public IDict {
 private:
 	enum readFileStatue { success, noFile, incorrectFile };
 	std::map<string, string> map;
-	string path;
 	readFileStatue LoadFromFile(const string& _path) {
 		std::ifstream inp(_path, std::ios::in);
 		if (!inp.is_open()) {
@@ -85,9 +85,14 @@ private:
 		inp.close();
 		return success;
 	}
+	auto Func(std::ostream& out) const  {
+		auto _out = &out;
+		return (([_out](const std::pair<string, string>& _pair) {
+			*_out << "<" << _pair.first << "><" << _pair.second << ">"; }));
+	}
 public:
 
-	Dict(const string& _path) : path(_path) {
+	Dict(const string& _path) {
 		switch (LoadFromFile(_path)) {
 		case incorrectFile: {
 			/*throw*/
@@ -99,10 +104,28 @@ public:
 		}
 		}
 	}
-	virtual void Add(const string&, const string&) {}
-	virtual bool Find(const string&, string&) { return true; }
-	virtual bool IsEmpty() const { return true; }
-	virtual void PutNewWord(const string&, const string&) {}
-	virtual void SaveToFile() {}
+	void Add(const string& word, const string& translation) {
+		map.insert(make_pair(word, translation));
+	}
+	bool Find(const string& word, string& translation) {
+		auto elem = map.find(word);
+		if (elem != map.end()) {
+			translation = (*elem).second;
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	bool IsEmpty() const { 
+		return (map.size() == 0);
+	}
+	void SaveToFile(const string& _path) const {
+		std::ofstream out(_path);
+
+		std::for_each(map.begin(), map.end(), Func(out));
+
+		out.close();
+	}
 };
 

@@ -59,5 +59,7 @@ public:
 
 int main() {
 	Dict dict(string("dictionary.txt"));
+	dict.SaveToFile(string("out.txt"));
+	dict.SaveToFile(string("out2.txt"));
 	return 0;
 }
