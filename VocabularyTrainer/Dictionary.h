@@ -8,6 +8,14 @@
 using std::string;
 typedef void(*OutToFile)(const std::pair<string, string>&);
 
+enum Item { _default, _incorrect, _help };
+
+Item GetItem(const string& str) {
+	if (str == string("#default")) return _default;
+	if (str == string("#help")) return _help;
+	return _incorrect;
+}
+
 class IDict {
 public:
 	virtual void Add(const string&, const string&) = 0;
@@ -85,7 +93,7 @@ private:
 		inp.close();
 		return success;
 	}
-	auto Func(std::ostream& out) const  {
+	auto GetOutToFileFunc(std::ostream& out) const  {
 		auto _out = &out;
 		return (([_out](const std::pair<string, string>& _pair) {
 			*_out << "<" << _pair.first << "><" << _pair.second << ">"; }));
@@ -123,9 +131,35 @@ public:
 	void SaveToFile(const string& _path) const {
 		std::ofstream out(_path);
 
-		std::for_each(map.begin(), map.end(), Func(out));
+		std::for_each(map.begin(), map.end(), GetOutToFileFunc(out));
 
 		out.close();
+	}
+};
+
+class DictClient {
+private:
+	IDict* dictionary;
+	std::ostream* out;
+	std::istream* inp;
+	bool isHelp;
+	void ShowHelp() {
+		*out << "1 - add the word\n";
+		*out << "2 - delete the word\n";
+		*out << "3 - find the word\n";
+	}
+public:
+	DictClient(const string& _path) : dictionary(new Dict(_path)) {
+		isHelp = true;
+	}
+	void Run() {
+		while (true) {
+
+			ShowHelp();
+			string word;
+			*inp >> word;
+
+		}
 	}
 };
 
