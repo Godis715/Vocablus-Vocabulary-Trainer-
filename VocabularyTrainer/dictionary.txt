@@ -1,4 +1,4 @@
-<cat><кошка>
-<human><человек>
-<world><мир>
-<cake><торт>
+<cat><koshka>
+<human><chelover>
+<world><mir>
+<cake><tort>

@@ -4,15 +4,18 @@
 #include <map>
 #include <fstream>
 #include <algorithm>
+#include <conio.h>
 
 using std::string;
 typedef void(*OutToFile)(const std::pair<string, string>&);
 
-enum Item { _default, _incorrect, _help };
+enum Item { _default, _incorrect, _help, _delete, _goOut };
 
 Item GetItem(const string& str) {
 	if (str == string("#default")) return _default;
 	if (str == string("#help")) return _help;
+	if (str == string("#delete")) return _delete;
+	if (str == string("#exit")) return _goOut;
 	return _incorrect;
 }
 
@@ -20,6 +23,7 @@ class IDict {
 public:
 	virtual void Add(const string&, const string&) = 0;
 	virtual bool Find(const string&, string&) = 0;
+	virtual void Delete(const string&) = 0;
 	virtual bool IsEmpty() const = 0;
 	virtual void SaveToFile(const string&) const = 0;
 };
@@ -125,6 +129,11 @@ public:
 			return false;
 		}
 	}
+
+	void Delete(const string& word) {
+		map.erase(word);
+	}
+
 	bool IsEmpty() const { 
 		return (map.size() == 0);
 	}
@@ -139,26 +148,104 @@ public:
 
 class DictClient {
 private:
-	IDict* dictionary;
+	IDict * dictionary;
 	std::ostream* out;
 	std::istream* inp;
-	bool isHelp;
-	void ShowHelp() {
-		*out << "1 - add the word\n";
-		*out << "2 - delete the word\n";
-		*out << "3 - find the word\n";
+
+	bool UserAgreement() {
+		while (true) {
+			char c;
+			c = _getch();
+			if (c == 27) {
+				return false;
+			}
+			else if (c == 13) {
+				return true;
+			}
+		}
 	}
+
 public:
-	DictClient(const string& _path) : dictionary(new Dict(_path)) {
-		isHelp = true;
+	DictClient(const string& _path, std::istream* _inp, std::ostream* _out) : dictionary(new Dict(_path)) {
+		inp = _inp;
+		out = _out;
 	}
 	void Run() {
+
+		enum state { enterWord, enterTrans, save};
+
+		state currentState = enterWord;
+
+		string currentWord;
+		string currentTranslation;
+		
+
 		while (true) {
 
-			ShowHelp();
-			string word;
-			*inp >> word;
+			if (currentState == enterWord && currentWord.empty()) {
+				(*out) << "enter word\n";
+			}
 
+			if (currentState == enterTrans) {
+				(*out) << "enter translation\n";
+			}
+
+			string line;
+			std::getline(*inp, line);
+
+			if (line.size() == 0) {
+				continue;
+			}
+
+			if (line[0] == '#') {
+				Item item = GetItem(line);
+				if (item == _delete && !currentWord.empty()) {
+					(*out) << "delete?\nYes/No (enter/ESC)\n";
+					if (UserAgreement()) {
+						dictionary->Delete(currentWord);
+						currentWord.clear();
+						currentTranslation.clear();
+					}
+					continue;
+				}
+				if (item == _goOut) {
+					(*out) << "exit?\nYes/No (enter/ESC)\n";
+					if (UserAgreement()) {
+						return;
+					}
+					continue;
+				}
+				//
+				continue;
+			}
+
+			if (currentState == enterWord) {
+				string trans;
+				bool isContains = dictionary->Find(line, trans);
+				if (!isContains) {
+					(*out) << "unknown word. Enter translation\nYes/No (enter/ESC)\n";
+					if (UserAgreement()) {
+						currentWord = line;
+						currentState = enterTrans;
+					}
+				}
+				else {
+					(*out) << trans << "\n";
+					currentWord = line;
+					currentTranslation = trans;
+				}
+				continue;
+			}
+
+			if (currentState == enterTrans) {
+				currentTranslation = line;
+				(*out) << "save?\nYes/No (enter/ESC)\n";
+				if (UserAgreement()) {
+					dictionary->Add(currentWord, currentTranslation);
+					currentState = enterWord;
+					continue;
+				}
+			}
 		}
 	}
 };

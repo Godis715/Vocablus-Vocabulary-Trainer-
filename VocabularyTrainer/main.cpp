@@ -58,8 +58,8 @@ public:
 };
 
 int main() {
-	Dict dict(string("dictionary.txt"));
-	dict.SaveToFile(string("out.txt"));
-	dict.SaveToFile(string("out2.txt"));
+	DictClient dict("dictionary.txt", &std::cin, &std::cout);
+	dict.Run();
+
 	return 0;
 }

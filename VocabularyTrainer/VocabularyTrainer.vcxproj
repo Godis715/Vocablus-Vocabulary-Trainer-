@@ -119,9 +119,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dictionary.h" />
-    <ClInclude Include="PQueue.h" />
-    <ClInclude Include="Trainer.h" />
-    <ClInclude Include="Word.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
