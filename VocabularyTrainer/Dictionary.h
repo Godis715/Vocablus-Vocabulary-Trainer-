@@ -9,13 +9,15 @@
 using std::string;
 typedef void(*OutToFile)(const std::pair<string, string>&);
 
-enum Item { _default, _incorrect, _help, _delete, _goOut };
+enum Item { _default, _incorrect, _help, _delete, _goOut, _save };
 
 Item GetItem(const string& str) {
 	if (str == string("#default")) return _default;
 	if (str == string("#help")) return _help;
 	if (str == string("#delete")) return _delete;
 	if (str == string("#exit")) return _goOut;
+	if (str == string("#save")) return _save;
+
 	return _incorrect;
 }
 
@@ -100,7 +102,7 @@ private:
 	auto GetOutToFileFunc(std::ostream& out) const  {
 		auto _out = &out;
 		return (([_out](const std::pair<string, string>& _pair) {
-			*_out << "<" << _pair.first << "><" << _pair.second << ">"; }));
+			*_out << "<" << _pair.first << "><" << _pair.second << ">\n"; }));
 	}
 public:
 
@@ -148,9 +150,10 @@ public:
 
 class DictClient {
 private:
-	IDict * dictionary;
+	IDict* dictionary;
 	std::ostream* out;
 	std::istream* inp;
+	string path;
 
 	bool UserAgreement() {
 		while (true) {
@@ -169,6 +172,7 @@ public:
 	DictClient(const string& _path, std::istream* _inp, std::ostream* _out) : dictionary(new Dict(_path)) {
 		inp = _inp;
 		out = _out;
+		path = _path;
 	}
 	void Run() {
 
@@ -182,8 +186,15 @@ public:
 
 		while (true) {
 
-			if (currentState == enterWord && currentWord.empty()) {
-				(*out) << "enter word\n";
+			system("cls");
+
+			(*out) << "selected word: "
+				<< ((!currentWord.empty()) ? currentWord : string("???"))
+				<< " - "
+				<< ((!currentTranslation.empty()) ? currentTranslation : string("???")) << "\n";
+
+			if (currentState == enterWord) {
+				(*out) << "type: ";
 			}
 
 			if (currentState == enterTrans) {
@@ -208,9 +219,17 @@ public:
 					}
 					continue;
 				}
+				if (item == _save) {
+					dictionary->SaveToFile(path);
+					continue;
+				}
 				if (item == _goOut) {
 					(*out) << "exit?\nYes/No (enter/ESC)\n";
 					if (UserAgreement()) {
+						(*out) << "save changes?\nYes/No (enter/ESC)\n";
+						if (UserAgreement()) {
+							dictionary->SaveToFile(path);
+						}
 						return;
 					}
 					continue;
@@ -226,6 +245,7 @@ public:
 					(*out) << "unknown word. Enter translation\nYes/No (enter/ESC)\n";
 					if (UserAgreement()) {
 						currentWord = line;
+						currentTranslation.clear();
 						currentState = enterTrans;
 					}
 				}
@@ -239,7 +259,7 @@ public:
 
 			if (currentState == enterTrans) {
 				currentTranslation = line;
-				(*out) << "save?\nYes/No (enter/ESC)\n";
+				(*out) << "save word?\nYes/No (enter/ESC)\n";
 				if (UserAgreement()) {
 					dictionary->Add(currentWord, currentTranslation);
 					currentState = enterWord;

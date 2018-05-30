@@ -1,4 +1,12 @@
-<cat><koshka>
-<human><chelover>
-<world><mir>
 <cake><tort>
+<cat><koshka>
+<cold><holodniy>
+<dictionary><slovar'>
+<dove><golub'>
+<house><dom>
+<human><chelover>
+<leg><noga>
+<love><lubov'>
+<shop><magazin>
+<train><poezd>
+<world><mir>
